@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>To-Do PWA</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 720px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    label {
+      font-weight: bold;
+      margin-top: 12px;
+      display: block;
+    }
+
+    input, select, textarea, button {
+      width: 100%;
+      padding: 8px;
+      margin-top: 6px;
+    }
+
+    button {
+      margin-top: 15px;
+      cursor: pointer;
+    }
+
+    .history {
+      margin-top: 30px;
+      border-top: 2px solid #ccc;
+      padding-top: 15px;
+    }
+
+    .history-item {
+      border-bottom: 1px solid #ddd;
+      padding: 8px 0;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>To-Do Entry</h2>
+
+<label>IP</label>
+<select id="ip">
+  <option value="">Select IP</option>
+  <option>Tanah Merah</option>
+  <option>Wulkuraka</option>
+  <option>Bray Park</option>
+  <option>Seville Grove</option>
+  <option>Park Avenue</option>
+  <option>Rasmussen</option>
+  <option>Kirwan</option>
+  <option>Auburn</option>
+  <option>St Albans</option>
+</select>
+
+<label>Task</label>
+<input type="text" id="task">
+
+<label>Bill or Follow-up</label>
+<select id="type">
+  <option value="">Select</option>
+  <option>Bill</option>
+  <option>Follow-up</option>
+</select>
+
+<label>Paid?</label>
+<select id="paid">
+  <option value="">Select</option>
+  <option>Yes</option>
+  <option>No</option>
+  <option>Complete</option>
+</select>
+
+<label>Due Date (DD-MM-YY)</label>
+<input type="text" id="dueDate" placeholder="DD-MM-YY">
+
+<label>Comments</label>
+<textarea id="comments"></textarea>
+
+<button onclick="exportToSheet()">Export to Sheet</button>
+<button onclick="clearHistory()">Clear History</button>
+
+<div class="history">
+  <h3>History</h3>
+  <div id="historyList"></div>
+</div>
+
+<script>
+  // Replace in iteration 2
+  const WEB_APP_URL = "PASTE_GOOGLE_WEB_APP_URL_HERE";
+
+  function getFormData() {
+    return {
+      ip: ip.value,
+      task: task.value,
+      type: type.value,
+      paid: paid.value,
+      dueDate: dueDate.value,
+      comments: comments.value,
+      timestamp: new Date().toLocaleString()
+    };
+  }
+
+  function exportToSheet() {
+    const data = getFormData();
+
+    if (!data.ip || !data.task) {
+      alert("IP and Task are required.");
+      return;
+    }
+
+    fetch(WEB_APP_URL, {
+      method: "POST",
+      body: JSON.stringify(data)
+    })
+    .then(() => {
+      saveToHistory(data);
+      renderHistory();
+      clearForm();
+    })
+    .catch(() => alert("Failed to export data"));
+  }
+
+  function saveToHistory(data) {
+    const history = JSON.parse(localStorage.getItem("history")) || [];
+    history.unshift(data);
+    localStorage.setItem("history", JSON.stringify(history));
+  }
+
+  function renderHistory() {
+    const history = JSON.parse(localStorage.getItem("history")) || [];
+    historyList.innerHTML = "";
+
+    history.forEach(item => {
+      const div = document.createElement("div");
+      div.className = "history-item";
+      div.innerHTML = `
+        <strong>${item.ip}</strong> — ${item.task}<br>
+        ${item.type} | Paid: ${item.paid} | Due: ${item.dueDate}<br>
+        ${item.comments}<br>
+        <em>${item.timestamp}</em>
+      `;
+      historyList.appendChild(div);
+    });
+  }
+
+  function clearHistory() {
+    if (confirm("Are you sure you want to delete all history?")) {
+      localStorage.removeItem("history");
+      renderHistory();
+    }
+  }
+
+  function clearForm() {
+    ip.value = "";
+    task.value = "";
+    type.value = "";
+    paid.value = "";
+    dueDate.value = "";
+    comments.value = "";
+  }
+
+  renderHistory();
+</script>
+
+</body>
+</html>
